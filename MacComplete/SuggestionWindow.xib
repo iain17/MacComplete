@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16B2555" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="SuggestionWindow" customModule="MacComplete" customModuleProvider="target">
+            <connections>
+                <outlet property="WordCells" destination="zLO-aQ-azY" id="8c5-DU-lc1"/>
+                <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="MacComplete" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hasShadow="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="utilityWindow" id="F0z-JX-Cv5">
+            <windowStyleMask key="styleMask" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" bottomStrut="YES"/>
+            <rect key="contentRect" x="545" y="0.0" width="198" height="21"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
+            <view key="contentView" wantsLayer="YES" id="se5-gp-TjO">
+                <rect key="frame" x="0.0" y="0.0" width="198" height="21"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tEA-Bh-Z6l">
+                        <rect key="frame" x="0.0" y="0.0" width="198" height="24"/>
+                        <segmentedCell key="cell" lineBreakMode="charWrapping" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="zLO-aQ-azY">
+                            <font key="font" metaFont="system"/>
+                            <segments>
+                                <segment label="Word 1"/>
+                                <segment label="Word 2" tag="1"/>
+                                <segment label="Word 3"/>
+                            </segments>
+                        </segmentedCell>
+                        <connections>
+                            <action selector="wordClick:" target="-2" id="NSV-vF-qPg"/>
+                        </connections>
+                    </segmentedControl>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="tEA-Bh-Z6l" firstAttribute="centerX" secondItem="se5-gp-TjO" secondAttribute="centerX" id="G2B-wS-5JK"/>
+                    <constraint firstItem="tEA-Bh-Z6l" firstAttribute="top" secondItem="se5-gp-TjO" secondAttribute="top" constant="-2" id="pOH-Lf-Qms"/>
+                </constraints>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+            </connections>
+            <point key="canvasLocation" x="-126" y="39.5"/>
+        </window>
+    </objects>
+</document>
