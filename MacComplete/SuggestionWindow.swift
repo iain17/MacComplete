@@ -36,23 +36,31 @@ class SuggestionWindow: NSWindowController {
         let margin = CGFloat(100)
         let width = (rect.size.width - margin) / CGFloat(WordCells.segmentCount)
         
-        for i in 0..<WordCells.segmentCount {
-            WordCells.setWidth(width, forSegment: i)
+        for segment in 0..<WordCells.segmentCount {
+            WordCells.setWidth(width, forSegment: segment)
         }
         
     }
     
-    func suggest(_ results: Results<Word>) {
-        for i in 0..<WordCells.segmentCount {
-            if i >= results.count {
-                WordCells.setEnabled(false, forSegment: i)
-                WordCells.setLabel("          ", forSegment: i)
-            } else {
-                let word = results[i]
-                WordCells.setEnabled(true, forSegment: i)
-                WordCells.setLabel(word.value, forSegment: i)
-            }
+    func suggest(_ results: [(word: String, amount: Int)]) {
+        //Reset segments
+        for segment in 0..<WordCells.segmentCount {
+            WordCells.setEnabled(false, forSegment: segment)
+            WordCells.setLabel("          ", forSegment: segment)
         }
+        
+        var segment = 0
+        for result in results {
+            //out of segments?
+            if segment >= results.count {
+                break
+            }
+            
+            WordCells.setEnabled(true, forSegment: segment)
+            WordCells.setLabel("\(result.word) (\(result.amount))", forSegment: segment)
+            segment += 1
+        }
+        
     }
     
     @IBAction func wordClick(_ sender: AnyObject) {

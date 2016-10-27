@@ -21,6 +21,7 @@ class Keyboard {
     
     var keys: [String] = [String]()
     var location:NSPoint? = nil
+    static let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789")
     
     let suggestionWindow: SuggestionWindow
     var realm: Realm
@@ -36,12 +37,11 @@ class Keyboard {
             return
         }
         
-        let predicate = NSPredicate(format: "value BEGINSWITH %@", getNewWord().value)
+        let uniqueResults = Word.getWordsLike(value: getNewWord().value, realm: realm)
         
-        let results = realm.objects(Word.self).filter(predicate)
-        if results.count > 0 {
+        if uniqueResults.count > 0 {
             suggestionWindow.showWindow(nil)
-            suggestionWindow.suggest(results)
+            suggestionWindow.suggest(uniqueResults)
         }
     }
     
@@ -58,7 +58,7 @@ class Keyboard {
     }
     
     private func clearKeys() {
-//        print("Cleared all all the keys")
+        print("Cleared all all the keys")
         keys.removeAll()
     }
     
@@ -128,13 +128,17 @@ class Keyboard {
         }
         
         if event.modifierFlags.rawValue == 0x100 || event.modifierFlags.rawValue == 0x20102 {
-            if let unsanitizedChar = event.characters {
-                let char = unsanitizedChar.replacingOccurrences(of: "\"", with: "", options: NSString.CompareOptions.literal, range:nil)
-                if(char != "") {
-                    addKey(char: char)
-                    autoComplete()
-                    return
+            
+            if let char = event.characters {
+                
+                if char.rangeOfCharacter(from: Keyboard.characterset.inverted) == nil {
+                    if(char != "") {
+                        addKey(char: char)
+                        autoComplete()
+                        return
+                    }
                 }
+                
             }
         }
         print("Event: \(event) could be used")
