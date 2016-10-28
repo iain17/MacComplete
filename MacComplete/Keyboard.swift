@@ -21,7 +21,7 @@ class Keyboard {
     
     var keys: [String] = [String]()
     var location:NSPoint? = nil
-    static let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789")
+    let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789")
     
     let suggestionWindow: SuggestionWindow
     var realm: Realm
@@ -45,6 +45,26 @@ class Keyboard {
         }
     }
     
+    private var test: String = ""
+    @objc func update() {
+//        let event = CGEvent(keyboardEventSource: nil, virtualKey: KeyCode.BACKSPACE.rawValue, keyDown: true)
+//        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: KeyCode.BACKSPACE.rawValue, keyDown: false)
+//        event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+//        event2?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+        
+        for key in test.keyCodes {
+            let event = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: true)
+            let event2 = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: false)
+            event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+            event2?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+        }
+    }
+    
+    public func complete(fullWord: String) {
+        test = fullWord.replacingOccurrences(of: getNewWord().value, with: "")
+        _ = Timer.scheduledTimer(timeInterval: 0.10, target: self, selector: #selector(update), userInfo: nil, repeats: false)
+    }
+    
     private func addKey(char: String) {
         keys.append(char)
     }
@@ -58,7 +78,7 @@ class Keyboard {
     }
     
     private func clearKeys() {
-        print("Cleared all all the keys")
+//        print("Cleared all all the keys")
         keys.removeAll()
     }
     
@@ -89,7 +109,6 @@ class Keyboard {
     }
     
     public func input(event: NSEvent) {
-        
         suggestionWindow.close()
         
         //If the the location has changed. Ignore the word we're a building.
@@ -97,6 +116,13 @@ class Keyboard {
             clearKeys()
         }
         location = event.locationInWindow
+        
+        
+        if event.modifierFlags.rawValue == 0x40101 && KeyCode(rawValue: event.keyCode) == KeyCode.SPACE {
+            suggestionWindow.wordClick(self)
+            clearKeys()
+            return
+        }
         
         //If command button was pressed. Clear keys
         if event.modifierFlags.rawValue == 0x100108 {
@@ -108,16 +134,18 @@ class Keyboard {
             if let key = KeyCode(rawValue: event.keyCode) {
                 switch( key ) {
                     
-                case KeyCode.TAB:
-                    print("tab")
-                    clearKeys()
-                    break
+//                case KeyCode.TAB:
+//                    suggestionWindow.wordClick(self)
+//                    clearKeys()
+//                    break
+                    
                 case KeyCode.ENTER, KeyCode.SPACE:
                     addWord()
                     clearKeys()
                     break
                 case KeyCode.BACKSPACE:
                     delKey()
+                    autoComplete()
                     break
                 default:
                     print("\(key) is not mapped")
@@ -131,7 +159,7 @@ class Keyboard {
             
             if let char = event.characters {
                 
-                if char.rangeOfCharacter(from: Keyboard.characterset.inverted) == nil {
+                if char.rangeOfCharacter(from: characterset.inverted) == nil {
                     if(char != "") {
                         addKey(char: char)
                         autoComplete()
@@ -141,7 +169,7 @@ class Keyboard {
                 
             }
         }
-        print("Event: \(event) could be used")
+//        print("Event: \(event) could be used")
     }
     
 }

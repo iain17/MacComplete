@@ -14,7 +14,9 @@ class Word : Object {
     dynamic var value: String = ""
     dynamic var date: Date = Date()
     
-    static let limit = 100
+    static public var dictionaries:[DCSDictionary]? = nil
+    
+    static private let limit = 100
     
     static func clearOld(realm: Realm) {
         let expireTime = NSDate(timeIntervalSinceNow:-(12*60*60))
@@ -47,18 +49,48 @@ class Word : Object {
             uniqueResults[result.value]! += 1
             index += 1
         }
-        func backward(a: (key: String, value: Int), b: (key: String, value: Int)) -> Bool {
+        return uniqueResults.sorted(by: { (a: (key: String, value: Int), b: (key: String, value: Int)) -> Bool in
             return a.value > b.value
-        }
-        return uniqueResults.sorted(by: backward) as! [(word: String, amount: Int)]
+        }) as! [(word: String, amount: Int)]
     }
     
     static func getWordsLike(value: String, realm: Realm) -> [(word: String, amount: Int)] {
         clearOld(realm: realm)
         let predicate = NSPredicate(format: "value BEGINSWITH %@", value)
         let results = realm.objects(Word.self).filter(predicate).sorted(byProperty: "date")
-        return sortLimitWords(results: results, limit: Word.limit)
+        
+        getDictionaryWords(value, realm: realm)
+        
+        return sortLimitWords(results: results, limit: Word.limit).filter({ (word: String, amount: Int) -> Bool in
+            return word != value
+        })
     }
+    
+    //Feed the machine by adding stuff from the dictionary.
+    static func getDictionaryWords(_ search: String, realm: Realm) {
+        DispatchQueue.main.async {
+            if dictionaries != nil {
+                let words = lookUp(search: search, dictionaries: dictionaries!)
+                
+                do {
+                    try realm.write {
+                        for word in words {
+                            let newWord = Word()
+                            newWord.value = word
+                            realm.add(newWord)
+                            print("\(newWord.value) saved")
+                        }
+                        try realm.commitWrite()
+                    }
+                } catch let exception {
+                    print("could not add words to our db:")
+                    print(exception)
+                }
+                
+            }
+        }
+    }
+    
 }
 
 

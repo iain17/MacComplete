@@ -57,15 +57,23 @@ class SuggestionWindow: NSWindowController {
             }
             
             WordCells.setEnabled(true, forSegment: segment)
-            WordCells.setLabel("\(result.word) (\(result.amount))", forSegment: segment)
+            //"\(result.word) (\(result.amount))"
+            WordCells.setLabel(result.word, forSegment: segment)
             segment += 1
         }
         
     }
     
     @IBAction func wordClick(_ sender: AnyObject) {
+        if !WordCells.isEnabled(forSegment: WordCells.selectedSegment) {
+            return
+        }
+        
         let label = WordCells.label(forSegment: WordCells.selectedSegment)
-        print(label)
+        if label != nil {
+            AppDelegate.keyboard.complete(fullWord: (label! as! String))
+        }
+        self.close()
     }
     
 }

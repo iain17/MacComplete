@@ -27,7 +27,7 @@
                         <segmentedCell key="cell" lineBreakMode="charWrapping" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="zLO-aQ-azY">
                             <font key="font" metaFont="system"/>
                             <segments>
-                                <segment label="Word 1"/>
+                                <segment label="Word 1" selected="YES"/>
                                 <segment label="Word 2" tag="1"/>
                                 <segment label="Word 3"/>
                             </segments>
