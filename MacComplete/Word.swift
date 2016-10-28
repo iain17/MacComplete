@@ -58,10 +58,11 @@ class Word : Object {
             if index > limit {
                 break
             }
-            if uniqueResults[result.value] == nil {
-                uniqueResults[result.value] = 0
+            let key = result.value.lowercased().capitalized
+            if uniqueResults[key] == nil {
+                uniqueResults[key] = 0
             }
-            uniqueResults[result.value]! += 1
+            uniqueResults[key]! += 1
             index += 1
         }
         

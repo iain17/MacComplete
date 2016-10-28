@@ -29,8 +29,10 @@ class SuggestionWindow: NSWindowController {
         
         //Make it so that the window uses 100% the width of the screen.
         let scrn: NSScreen = NSScreen.main()!
+        
         let rect: NSRect = scrn.frame
-        let location = NSRect(origin: CGPoint(x:0, y: 0), size: CGSize(width: rect.size.width, height: 24))
+        
+        let location = NSRect(origin: CGPoint(x:rect.minX, y: rect.minY), size: CGSize(width: rect.size.width, height: 24))
         self.window?.setFrame(location, display: true)
         
         let margin = CGFloat(100)
@@ -43,6 +45,10 @@ class SuggestionWindow: NSWindowController {
     }
     
     func suggest(_ results: [(word: String, amount: Int)]) {
+        if (self.window?.isVisible)! {
+            focus()
+        }
+        
         //Reset segments
         for segment in 0..<WordCells.segmentCount {
             WordCells.setEnabled(false, forSegment: segment)

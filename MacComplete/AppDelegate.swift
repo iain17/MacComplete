@@ -65,7 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // keyboard listeners
             NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyDown, handler: AppDelegate.keyboard.input)
             NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyUp, handler: AppDelegate.keyboard.keyUp)
-            //NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.mouseMoved, handler: AppDelegate.keyboard.input)
+            NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.mouseMoved, handler: AppDelegate.keyboard.input)
         }
         
     }

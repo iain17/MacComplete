@@ -47,7 +47,9 @@ class Keyboard {
                 }
                 self.suggestionWindow.suggest(uniqueResults)
             } else {
-                self.suggestionWindow.close()
+                if (self.suggestionWindow.window?.isVisible)! {
+                    self.suggestionWindow.close()
+                }
             }
         }
     }
@@ -76,18 +78,16 @@ class Keyboard {
     }
     
     public func complete(fullWord: String) {
-        test = fullWord.replacingOccurrences(of: getNewWord().value, with: "")
+        test = fullWord.lowercased().replacingOccurrences(of: getNewWord().value.lowercased(), with: "")
     }
     
     public func keyUp(event: NSEvent) {
-        DispatchQueue.main.async {
-            if self.test == "" {
-                return
-            }
-            
-            self.complete.invalidate()
-            self.complete = Timer.scheduledTimer(timeInterval: 0.100, target: self, selector: #selector(self.doComplete), userInfo: nil, repeats: false)
+        self.complete.invalidate()
+        if self.test == "" {
+            return
         }
+        
+        self.complete = Timer.scheduledTimer(timeInterval: 0.500, target: self, selector: #selector(self.doComplete), userInfo: nil, repeats: false)
     }
     
     private func addKey(char: String) {
@@ -105,6 +105,7 @@ class Keyboard {
     private func clearKeys() {
 //        print("Cleared all all the keys")
         keys.removeAll()
+        self.suggestionWindow.close()
     }
     
     private func getNewWord()-> Word {
@@ -118,20 +119,19 @@ class Keyboard {
         if keys.count < 4 {
             return
         }
-        
         let word = getNewWord()
         word.save(realm: realm)
     }
     
     public func input(event: NSEvent) {
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).sync {
             //If the the location has changed. Ignore the word we're a building.
             if self.location != event.locationInWindow {
                 self.clearKeys()
             }
             self.location = event.locationInWindow
             
-            
+            //auto complete.
             if event.modifierFlags.rawValue == 0x40101 && KeyCode(rawValue: event.keyCode) == KeyCode.SPACE {
                 self.suggestionWindow.wordClick(self)
                 self.clearKeys()
