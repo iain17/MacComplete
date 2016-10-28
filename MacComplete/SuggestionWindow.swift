@@ -71,7 +71,7 @@ class SuggestionWindow: NSWindowController {
         
         let label = WordCells.label(forSegment: WordCells.selectedSegment)
         if label != nil {
-            AppDelegate.keyboard.complete(fullWord: (label! as! String))
+            AppDelegate.keyboard.complete(fullWord: (label!))
         }
         self.close()
     }

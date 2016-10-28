@@ -10,9 +10,7 @@ import Cocoa
 
 func acquirePrivileges() -> Bool {
     let options : NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as NSString: true]
-    
-    let accessEnabled = AXIsProcessTrustedWithOptions(options)
-    return accessEnabled == true
+    return AXIsProcessTrustedWithOptions(options)
 }
 
 @NSApplicationMain
@@ -24,7 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     static public let keyboard: Keyboard = Keyboard()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        statusItem.title = "MacComplete"
+        statusItem.title = "MacComplete (Waiting for privilege)"
         statusItem.menu = statusMenu
         
         if let button = statusItem.button {
@@ -33,39 +31,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 //            button.action = Selector("togglePopover:")
         }
         
-        while(!acquirePrivileges()) {
-            print("You need to enable the keylogger in the System Preferences")
-            sleep(1)
+        DispatchQueue.main.async {
+            while(!acquirePrivileges()) {
+                print("You grand MacComplete access in the System Preferences")
+                sleep(10)
+            }
+            self.statusItem.title = "MacComplete"
+            
+            //TODO: Preference screen?
+            let dictsChoices = getAvailableDictionaries()
+            var dicts = [DCSDictionary]()
+            //Choose the English and dutch dictionaries
+            for dictChoice in dictsChoices {
+                if dictChoice.key == "New Oxford American Dictionary" {
+                    dicts.append(dictChoice.value)
+                }
+                
+                if dictChoice.key == "Prisma woordenboek Nederlands" {
+                    dicts.append(dictChoice.value)
+                }
+                
+                if dictChoice.key == "Oxford Dictionary of English" {
+                    dicts.append(dictChoice.value)
+                }
+                
+                if dictChoice.key == "Wikipedia" {
+                    dicts.append(dictChoice.value)
+                }
+            }
+            Word.dictionaries = dicts
+            
+            
+            // keyboard listeners
+            NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyDown, handler: AppDelegate.keyboard.input)
+            NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyUp, handler: AppDelegate.keyboard.keyUp)
+            //NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.mouseMoved, handler: AppDelegate.keyboard.input)
         }
         
-        //TODO: Preference screen?
-        let dictsChoices = getAvailableDictionaries()
-        var dicts = [DCSDictionary]()
-        //Choose the English and dutch dictionaries
-        for dictChoice in dictsChoices {
-            if dictChoice.key == "New Oxford American Dictionary" {
-                dicts.append(dictChoice.value)
-            }
-            
-            if dictChoice.key == "Prisma woordenboek Nederlands" {
-                dicts.append(dictChoice.value)
-            }
-            
-            if dictChoice.key == "Oxford Dictionary of English" {
-                dicts.append(dictChoice.value)
-            }
-            
-            if dictChoice.key == "Wikipedia" {
-                dicts.append(dictChoice.value)
-            }
-        }
-        Word.dictionaries = dicts
-        
-        
-        // keyboard listeners
-        NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyDown, handler: AppDelegate.keyboard.input)
-        NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.keyUp, handler: AppDelegate.keyboard.keyUp)
-        //NSEvent.addGlobalMonitorForEvents(matching: NSEventMask.mouseMoved, handler: AppDelegate.keyboard.input)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

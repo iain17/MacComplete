@@ -18,21 +18,37 @@ class Word : Object {
     
     static private let limit = 100
     
-    static func clearOld(realm: Realm) {
-        let expireTime = NSDate(timeIntervalSinceNow:-(12*60*60))
-        let predicate = NSPredicate(format: "date < %@", expireTime)
-        do {
-            try realm.write {
-                let itemsToDelete = realm.objects(Word.self).filter(predicate)
-                realm.delete(itemsToDelete)
-                try realm.commitWrite()
-                print("\(itemsToDelete.count) deleted")
+    func save(realm: Realm) {
+        DispatchQueue.main.async {
+            do {
+                try realm.write {
+                    realm.add(self)
+                    try realm.commitWrite()
+                    print("\(self.value) saved")
+                }
+            } catch let exception {
+                print("\(self.value) failed to be saved:")
+                print(exception)
             }
-        } catch let exception {
-            print("Failed to delete old items")
-            print(exception)
         }
-        
+    }
+    
+    static func clearOld(realm: Realm) {
+        DispatchQueue.main.async {
+            let expireTime = NSDate(timeIntervalSinceNow:-(12*60*60))
+            let predicate = NSPredicate(format: "date < %@", expireTime)
+            do {
+                try realm.write {
+                    let itemsToDelete = realm.objects(Word.self).filter(predicate)
+                    realm.delete(itemsToDelete)
+                    try realm.commitWrite()
+                    print("\(itemsToDelete.count) deleted")
+                }
+            } catch let exception {
+                print("Failed to delete old items")
+                print(exception)
+            }
+        }
     }
     
     static private func sortLimitWords(results: Results<Word>, limit: Int) -> [(word: String, amount: Int)] {
@@ -48,20 +64,21 @@ class Word : Object {
             uniqueResults[result.value]! += 1
             index += 1
         }
+        
         return uniqueResults.sorted(by: { (a: (key: String, value: Int), b: (key: String, value: Int)) -> Bool in
             return a.value > b.value
         }) as! [(word: String, amount: Int)]
     }
     
-    static func getWordsLike(value: String, realm: Realm) -> [(word: String, amount: Int)] {
+    static func getWordsLike(search: String, realm: Realm) -> [(word: String, amount: Int)] {
         clearOld(realm: realm)
-        let predicate = NSPredicate(format: "value BEGINSWITH %@", value)
+        let predicate = NSPredicate(format: "value BEGINSWITH[c] %@", search)
         let results = realm.objects(Word.self).filter(predicate).sorted(byProperty: "date")
         
-        getDictionaryWords(value, realm: realm)
+        getDictionaryWords(search, realm: realm)
         
         return sortLimitWords(results: results, limit: Word.limit).filter({ (word: String, amount: Int) -> Bool in
-            return word != value
+            return word != search
         })
     }
     

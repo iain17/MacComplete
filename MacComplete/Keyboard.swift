@@ -32,16 +32,23 @@ class Keyboard {
     }
     
     private func autoComplete() {
-        //Only add words that are worthwhile
-        if keys.count < 2 {
-            return
-        }
-        
-        let uniqueResults = Word.getWordsLike(value: getNewWord().value, realm: realm)
-        
-        if uniqueResults.count > 0 {
-            suggestionWindow.showWindow(nil)
-            suggestionWindow.suggest(uniqueResults)
+        DispatchQueue.main.async {
+            //Only add words that are worthwhile
+            if self.keys.count < 2 {
+                self.suggestionWindow.close()
+                return
+            }
+            
+            let uniqueResults = Word.getWordsLike(search: self.getNewWord().value, realm: self.realm)
+            
+            if uniqueResults.count > 0 {
+                if !(self.suggestionWindow.window?.isVisible)! {
+                    self.suggestionWindow.showWindow(nil)
+                }
+                self.suggestionWindow.suggest(uniqueResults)
+            } else {
+                self.suggestionWindow.close()
+            }
         }
     }
     
@@ -54,13 +61,18 @@ class Keyboard {
 //        event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
 //        event2?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
         
+        var events = [CGEvent]()
         for key in test.keyCodes {
             let event = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: true)
             let event2 = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: false)
-            event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
-            event2?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+            events.append(event!)
+            events.append(event2!)
         }
         test = ""
+        
+        for event in events {
+            event.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
+        }
     }
     
     public func complete(fullWord: String) {
@@ -68,12 +80,14 @@ class Keyboard {
     }
     
     public func keyUp(event: NSEvent) {
-        if test == "" {
-            return
+        DispatchQueue.main.async {
+            if self.test == "" {
+                return
+            }
+            
+            self.complete.invalidate()
+            self.complete = Timer.scheduledTimer(timeInterval: 0.100, target: self, selector: #selector(self.doComplete), userInfo: nil, repeats: false)
         }
-        
-        complete.invalidate()
-        complete = Timer.scheduledTimer(timeInterval: 0.100, target: self, selector: #selector(doComplete), userInfo: nil, repeats: false)
     }
     
     private func addKey(char: String) {
@@ -106,82 +120,73 @@ class Keyboard {
         }
         
         let word = getNewWord()
-        do {
-            try realm.write {
-                realm.add(word)
-                try realm.commitWrite()
-                print("\(word.value) saved")
-            }
-        } catch let exception {
-            print("\(word.value) failed to be saved:")
-            print(exception)
-        }
-        
+        word.save(realm: realm)
     }
     
     public func input(event: NSEvent) {
-        suggestionWindow.close()
-        
-        //If the the location has changed. Ignore the word we're a building.
-        if location != event.locationInWindow {
-            clearKeys()
-        }
-        location = event.locationInWindow
-        
-        
-        if event.modifierFlags.rawValue == 0x40101 && KeyCode(rawValue: event.keyCode) == KeyCode.SPACE {
-            suggestionWindow.wordClick(self)
-            clearKeys()
-            return
-        }
-        
-        //If command button was pressed. Clear keys
-        if event.modifierFlags.rawValue == 0x100108 {
-            addWord()
-            clearKeys()
-            return
-        }
-        
-        if event.modifierFlags.rawValue == 0x100 {
-            if let key = KeyCode(rawValue: event.keyCode) {
-                switch( key ) {
-                    
-//                case KeyCode.TAB:
-//                    suggestionWindow.wordClick(self)
-//                    clearKeys()
-//                    break
-                    
-                case KeyCode.ENTER, KeyCode.SPACE:
-                    addWord()
-                    clearKeys()
-                    break
-                case KeyCode.BACKSPACE:
-                    delKey()
-                    autoComplete()
-                    break
-                default:
-                    print("\(key) is not mapped")
-                    break
-                }
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            //If the the location has changed. Ignore the word we're a building.
+            if self.location != event.locationInWindow {
+                self.clearKeys()
+            }
+            self.location = event.locationInWindow
+            
+            
+            if event.modifierFlags.rawValue == 0x40101 && KeyCode(rawValue: event.keyCode) == KeyCode.SPACE {
+                self.suggestionWindow.wordClick(self)
+                self.clearKeys()
                 return
             }
+            
+            //If command button was pressed. Clear keys
+            if event.modifierFlags.rawValue == 0x100108 {
+                self.addWord()
+                self.clearKeys()
+                return
+            }
+            
+            if event.modifierFlags.rawValue == 0x100 {
+                if let key = KeyCode(rawValue: event.keyCode) {
+                    switch( key ) {
+                        
+    //                case KeyCode.TAB:
+    //                    suggestionWindow.wordClick(self)
+    //                    clearKeys()
+    //                    break
+                        
+                    case KeyCode.ENTER, KeyCode.SPACE:
+                        self.addWord()
+                        self.clearKeys()
+                        break
+                    case KeyCode.BACKSPACE:
+                        self.delKey()
+                        self.autoComplete()
+                        break
+                    default:
+                        print("\(key) is not mapped")
+                        break
+                    }
+                    return
+                }
+            }
+            
+            if event.modifierFlags.rawValue == 0x100 || event.modifierFlags.rawValue == 0x20102 {
+                
+                if let char = event.characters {
+                    
+                    if char.rangeOfCharacter(from: self.characterset.inverted) == nil {
+                        if(char != "") {
+                            self.addKey(char: char)
+                            self.autoComplete()
+                            return
+                        }
+                    }
+                    
+                }
+            }
+    //        print("Event: \(event) could be used")
         }
         
-        if event.modifierFlags.rawValue == 0x100 || event.modifierFlags.rawValue == 0x20102 {
-            
-            if let char = event.characters {
-                
-                if char.rangeOfCharacter(from: characterset.inverted) == nil {
-                    if(char != "") {
-                        addKey(char: char)
-                        autoComplete()
-                        return
-                    }
-                }
-                
-            }
-        }
-//        print("Event: \(event) could be used")
     }
     
 }
