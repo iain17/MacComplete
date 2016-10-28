@@ -33,7 +33,6 @@ class Word : Object {
             print(exception)
         }
         
-        
     }
     
     static private func sortLimitWords(results: Results<Word>, limit: Int) -> [(word: String, amount: Int)] {
@@ -75,6 +74,13 @@ class Word : Object {
                 do {
                     try realm.write {
                         for word in words {
+                            
+                            //Check if it already exists
+                            let predicate = NSPredicate(format: "value = %@", word)
+                            if realm.objects(Word.self).filter(predicate).count > 0 {
+                                continue
+                            }
+                            
                             let newWord = Word()
                             newWord.value = word
                             realm.add(newWord)

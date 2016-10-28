@@ -45,8 +45,10 @@ class Keyboard {
         }
     }
     
+    var complete = Timer()
     private var test: String = ""
-    @objc func update() {
+    @objc
+    func doComplete() {
 //        let event = CGEvent(keyboardEventSource: nil, virtualKey: KeyCode.BACKSPACE.rawValue, keyDown: true)
 //        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: KeyCode.BACKSPACE.rawValue, keyDown: false)
 //        event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
@@ -58,11 +60,20 @@ class Keyboard {
             event?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
             event2?.post(tap: CGEventTapLocation.cgAnnotatedSessionEventTap)
         }
+        test = ""
     }
     
     public func complete(fullWord: String) {
         test = fullWord.replacingOccurrences(of: getNewWord().value, with: "")
-        _ = Timer.scheduledTimer(timeInterval: 0.10, target: self, selector: #selector(update), userInfo: nil, repeats: false)
+    }
+    
+    public func keyUp(event: NSEvent) {
+        if test == "" {
+            return
+        }
+        
+        complete.invalidate()
+        complete = Timer.scheduledTimer(timeInterval: 0.100, target: self, selector: #selector(doComplete), userInfo: nil, repeats: false)
     }
     
     private func addKey(char: String) {
@@ -126,6 +137,7 @@ class Keyboard {
         
         //If command button was pressed. Clear keys
         if event.modifierFlags.rawValue == 0x100108 {
+            addWord()
             clearKeys()
             return
         }

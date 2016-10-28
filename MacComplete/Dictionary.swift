@@ -55,5 +55,10 @@ func lookUp(search: String, dictionaries: [DCSDictionary]) -> [String] {
             }
         }
     }
+    //Remove sentences
+    results = results.filter({(value: String) in
+        return !value.contains(" ")
+    })
+    
     return removeDuplicateStrings(results)
 }
